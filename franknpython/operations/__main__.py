@@ -7,7 +7,7 @@ from pathlib import Path
 
 import logging
 
-from franknpython.operations.base import OperationBase
+from franknpython.operations.base import OperationBase, EncoderBase
 
 log = logging.getLogger()
 
@@ -16,6 +16,10 @@ async def main(source):
     with open(Path(source).joinpath("code"), 'r') as code_file:
         code = code_file.read()
         log.debug(f"Code received in script:\n{code}")
+    with open(Path(source).joinpath("encoder"), 'r') as encoder_file:
+        encoder_code = encoder_file.read()
+        log.debug(f"Encoder code received in script:\n{encoder_code}")
+
     with open(Path(source).joinpath("kwargs"), 'rb') as kwargs_file:
         kwargs = pickle.load(kwargs_file)
 
@@ -23,16 +27,30 @@ async def main(source):
     log.debug("kwargs: ", kwargs)
 
     code_obj = compile(code, '<string>', 'exec')
-
-    new_func_type = types.FunctionType(
+    work_function = types.FunctionType(
         next((const for const in code_obj.co_consts if isinstance(const, types.CodeType))),
         globals())
 
+    encoder_code_obj = compile(encoder_code, '<string>', 'exec')
+    encode_function = types.FunctionType(
+        next((const for const in encoder_code_obj.co_consts if isinstance(const, types.CodeType))),
+        globals())
+
+    class Encoder(EncoderBase):
+        encode = encode_function
+
+        async def decode(self, file):
+            pass  # Just a dummy, we do not decode
+
     class Surrogate(OperationBase):
-        work = staticmethod(new_func_type)
+        work = staticmethod(work_function)
+        encoder = Encoder()
 
     s = Surrogate()
-    return await s.work_wrapper(**kwargs)
+
+    result = await s.work_wrapper(**kwargs)
+
+    await s.encoder.encode(result, Path(source_dir).joinpath("result"))
 
 
 if __name__ == '__main__':
@@ -41,10 +59,7 @@ if __name__ == '__main__':
     assert source_dir.is_dir(), f"Directory {sys.argv[1]} does not exist"
 
     try:
-        result = asyncio.run(main(source_dir))
-
-        with open(Path(source_dir).joinpath("result"), 'wb') as result_file:
-            pickle.dump(result, result_file)
+        asyncio.run(main(source_dir))
 
     except Exception as e:
         log.error(f"{e.__class__.__name__} exception: {str(e)}")

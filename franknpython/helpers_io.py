@@ -1,4 +1,3 @@
-import pickle
 from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Any
@@ -24,9 +23,12 @@ class EncoderBase(ABC):
 class PickleEncoder(EncoderBase):
 
     async def encode(self, stuff, file):
+        import pickle
+
         with open(file, 'wb') as f:
-            f.write(stuff)
+            pickle.dump(stuff, f)
 
     async def decode(self, file):
+        import pickle
         with open(file, 'rb') as f:
             return pickle.load(f)
