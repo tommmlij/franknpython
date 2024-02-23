@@ -16,6 +16,7 @@ from venv import EnvBuilder
 from asyncio import StreamReader
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 
+from ..helpers_code import serialize_code
 from ..helpers_io import EncoderBase, PickleEncoder
 
 log_local = logging.getLogger(__name__)
@@ -96,35 +97,35 @@ class OperationBase(ABC):
             code_file = d.joinpath("code")
             kwargs_file = d.joinpath("kwargs")
             result_file = d.joinpath("result")
+            encoder_file = d.joinpath("encoder")
+
+            # Work function source
 
             source = inspect.getsource(self.work)
 
             log_local.debug(f"Source from class:\n{source}")
 
-            # Align left
-            i_length = len(source)
-            source = source.lstrip(" ")
-            pattern = r"(^|\n) {" + str(i_length - len(source)) + r"}"
-            source = re.sub(pattern, '\n', source)
+            source = await serialize_code(source)
 
-            log_local.debug(f"1:\n{source}")
-
-            # Remove blank lines
-            source = re.sub(r'\n[\n ]*\n', '\n', source)
-
-            log_local.debug(f"2:\n{source}")
-
-            # Remove header
-            source = re.sub(r'^\s*@staticmethod\s*\n', '', source)
-
-            log_local.debug(f"3:\n{source}")
-
+            # We inject the kwargs
             source = re.sub(r'((^|\n)async def work(.*):\s*\n)', f'\\1    globals().update({kwargs})\n', source)
 
             log_local.debug(f"Source edited:\n{source}")
 
+            # Encoder source
+
+            source_encode = inspect.getsource(self.encoder.encode)
+
+            log_local.debug(f"Encoder source from class:\n{source_encode}")
+
+            source_encode = await serialize_code(source_encode)
+
+            log_local.debug(f"Encoder source edited:\n{source_encode}")
+
             with open(code_file, 'w') as f:
                 f.write(source)
+            with open(encoder_file, 'w') as f:
+                f.write(source_encode)
             with open(kwargs_file, 'wb') as f:
                 pickle.dump(kwargs, f)
 
@@ -159,7 +160,8 @@ class OperationBase(ABC):
             if not result_file.is_file():
                 return
 
-            decode()
+            return await self.encoder.decode(result_file)
+
     async def install(self):
 
         if self.python is not None:

@@ -14,7 +14,7 @@ handler.setFormatter(
     colorlog.ColoredFormatter(
         '%(asctime)s - %(process)-5d - %(log_color)s%(levelname)-8s%(reset)s | %(message)s'))
 
-logging.basicConfig(level=logging.INFO, handlers=[handler])
+logging.basicConfig(level=logging.DEBUG, handlers=[handler])
 
 log = logging.getLogger()
 
@@ -43,22 +43,19 @@ class Cow(OperationBase):
         t = cowsay.get_output_string('cow', text=text)
         logger.info(f'Here is your cow:\n{t}')
 
-        def func():
-            print("Hmmm...")
-
-        return func
+        return "Juhu!"
 
 
 async def main():
-    ts = [Tux(), Cow()]
+    ts = [Cow()]
     for t in ts:
         await t.install()
-        await t.update()
+        # await t.update()
 
     # result_1 = await ts[0].run()
     # log.info(f'Here is your linux user:\n{result_1}')
 
-    result_2 = await ts[1].run(text="WFT, dude!")
+    result_2 = await ts[0].run(text="WFT, dude!")
 
     print(type(result_2))
     print(result_2)
