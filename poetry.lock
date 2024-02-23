@@ -28,6 +28,10 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 [package.extras]
 development = ["black", "flake8", "mypy", "pytest", "types-colorama"]
 
+[metadata]
+lock-version = "2.0"
+python-versions = ">=3.8 <=3.12"
+content-hash = "8d7e168f267d7cb57fcac37794f798b42631dad926ec2f577fd11c100f174045"
 [[package]]
 name = "coverage"
 version = "7.4.3"
