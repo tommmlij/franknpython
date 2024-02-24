@@ -23,10 +23,10 @@ jobs:
           key: venv-${{ hashFiles('poetry.lock') }}
       - name: Install the project dependencies
         run: |
-          poetry install
           poetry self add "poetry-dynamic-versioning[plugin]"
+          poetry install
       - name: Run tests and collect coverage
-        run: pytest --cov franknpython
+        run: poetry run pytest --cov franknpython
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
