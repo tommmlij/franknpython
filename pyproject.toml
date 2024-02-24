@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "new-operation"
+name = "franknpython"
 version = "0.1.0"
 description = ""
 authors = ["tommmlij <tommmlij@gmail.com>"]
@@ -13,5 +13,10 @@ python = ">=3.8 <=3.12"
 colorlog = "^6.8.2"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+pattern = "^(v|test)((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)"
