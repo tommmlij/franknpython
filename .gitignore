@@ -1,2 +1,4 @@
 .idea
 dist
+.pytest_cache
+.coverage
