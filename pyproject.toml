@@ -1,13 +1,19 @@
 [tool.poetry]
 name = "franknpython"
 version = "0.1.0"
-description = ""
+description = "Running application parts async with different python interpreters"
+license = "MIT"
 authors = ["tommmlij <tommmlij@gmail.com>"]
 readme = "README.md"
+homepage = "https://github.com/tommmlij/franknpython"
+
+[tool.poetry.urls]
+"GitHub: issues" = "https://github.com/tommmlij/franknpython/issues"
+"GitHub: repo" = "https://github.com/tommmlij/franknpython"
+
 
 [tool.poetry.dependencies]
 python = ">=3.8 <=3.12"
-
 
 [tool.poetry.group.dev.dependencies]
 colorlog = "^6.8.2"
