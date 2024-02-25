@@ -1,18 +1,36 @@
+import logging
 import asyncio
 import inspect
+from abc import ABC, abstractmethod
 
-from franknpython.helpers_code import serialize_code
+from franknpython.helpers_code import encode_code
 
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger()
 
 async def serialization():
+    class T:
 
-    def func():
-        print("Hallo")
+        @staticmethod
+        async def func():
+            print("Hallo")
 
-    source = inspect.getsource(func)
-    print("in: \n", source)
-    source_out = await serialize_code(source)
-    print("out: \n", source_out)
+    t = T()
+
+    source = inspect.getsource(t.func)
+    log.info(f"in: \n{source}")
+    source_out = await encode_code(source)
+    log.info(f"in: \n{source_out}")
+
+    class U(ABC):
+        @abstractmethod
+        async def func(self):
+            pass
+
+
+
+
+
 
 if __name__ == '__main__':
     asyncio.run(serialization())
