@@ -108,7 +108,8 @@ class OperationBase(ABC):
                         log_record = pickle.loads(log_pickle)
                         log_record.process = pid
                         log_local.handle(log_record)
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         print(line.decode('utf-8'), end="")
 
         with TemporaryDirectory() as td:

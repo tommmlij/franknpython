@@ -32,7 +32,7 @@ async def serialization():
 
         @staticmethod
         async def work():
-            print("Hallo")
+            return "Hallo"
 
     t = T()
 
@@ -43,7 +43,8 @@ async def serialization():
 
     await t.install()
     # await t.update()
-    await t.run()
+    result = await t.run()
+    print(f"Result: {result}")
 
 
 if __name__ == '__main__':
