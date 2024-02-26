@@ -33,12 +33,9 @@ class OperationBase(ABC):
     venv_path: Optional[Path] = None
     install_local_env: bool = False
     encoder: Optional[EncoderBase] = None
+    work: Optional[FunctionType]
 
     def __init__(self):
-        async def work():
-            raise NotImplementedError
-
-        self.work = work
 
         if self.encoder is None:
             self.encoder = PickleEncoder()
@@ -50,7 +47,7 @@ class OperationBase(ABC):
             self.venv_path = Path().cwd().joinpath(".venv")
 
     async def import_work(self, code: str) -> None:
-        self.work = types.MethodType(await decode_code(code), self)
+        self.work = await decode_code(code)
 
     async def export_work(self) -> str:
         source = inspect.getsource(self.work)
@@ -145,7 +142,7 @@ class OperationBase(ABC):
                 pickle.dump(kwargs, f)
 
             cmd = (
-                f"cd {d.as_posix()} && {self.interpreter.as_posix()} -m franknpython.operations {d.as_posix()}"
+                f"cd {d.as_posix()} && {self.interpreter.as_posix()} -m franknpython {d.as_posix()}"
             )
 
             start = time()
@@ -158,6 +155,7 @@ class OperationBase(ABC):
 
             if proc.returncode != 0:
                 error_file = d.joinpath("error_message")
+                msg = ""
                 if error_file.exists():
                     with open(error_file, "r") as f:
                         msg = f.read()
