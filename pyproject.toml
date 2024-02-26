@@ -6,6 +6,7 @@ license = "MIT"
 authors = ["tommmlij <tommmlij@gmail.com>"]
 readme = "README.md"
 homepage = "https://github.com/tommmlij/franknpython"
+packages = [{ include = "franknpython", from = "src" }]
 
 [tool.poetry.urls]
 "GitHub: issues" = "https://github.com/tommmlij/franknpython/issues"

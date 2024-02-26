@@ -7,6 +7,8 @@ import platform
 import re
 import subprocess
 import sys
+import types
+from abc import abstractmethod, ABC
 from time import time
 from pathlib import Path
 from tempfile import TemporaryDirectory, NamedTemporaryFile
@@ -24,18 +26,35 @@ from franknpython.helpers_code import encode_code, decode_code
 log_local = logging.getLogger(__name__)
 
 
-class OperationBase:
+class OperationBase(ABC):
     requirements: Optional[Path] = None
     python: Optional[Path] = None
     venv_path: Optional[Path] = None
     install_local_env: bool = False
-    encoder: None  # EncoderBase = PickleEncoder()
+    encoder: PickleEncoder()
     _work: Optional[FunctionType]
     _encode: Optional[FunctionType]
 
     def __init__(self):
+        async def work():
+            raise NotImplementedError
+
+        self.work = work
+
+        async def encode():
+            raise NotImplementedError
+
+        self.work = work
+
         if self.venv_path is None:
             self.venv_path = Path().cwd().joinpath(".venv")
+
+    async def import_work(self, code: str) -> None:
+        self.work = types.MethodType(await decode_code(code), self)
+
+    async def export_work(self) -> str:
+        source = inspect.getsource(self.work)
+        return await encode_code(source)
 
     async def work_wrapper(self, **kwargs):
 
@@ -74,36 +93,6 @@ class OperationBase:
         assert python.is_file
         return python
 
-    async def work(self, **kwargs):
-        if self._work is None:
-            raise NotImplementedError
-        return self._work(**kwargs)
-
-    async def import_work(self, code:str) -> None:
-
-        self._work = await decode_code(code)
-
-    async def export_work(self) -> str:
-        if self._work is None:
-            raise NotImplementedError
-        source = inspect.getsource(self._work)
-        return await encode_code(source)
-
-    async def encode(self, **kwargs):
-        if self._encode is None:
-            raise NotImplementedError
-        return self._encode(**kwargs)
-
-    async def import_encode(self, code: str) -> None:
-
-        self._encode = await decode_code(code)
-
-    async def export_encode(self) -> str:
-        if self._work is None:
-            raise NotImplementedError
-        source = inspect.getsource(self._encode)
-        return await encode_code(source)
-
     async def run(self, **kwargs):
         async def watch(stream: StreamReader, err=False, pid=os.getpid()):
             _ = err
@@ -131,20 +120,13 @@ class OperationBase:
 
             # Work function source
 
-            source = inspect.getsource(self.work)
-
-            log_local.debug(f"Source from class:\n{source}")
-
-            source = ""  # await serialize_code(source)
-
-            # We inject the kwargs
-            source = re.sub(r'((^|\n)async def work(.*):\s*\n)', f'\\1    globals().update({kwargs})\n', source)
+            source = await self.export_work()
 
             log_local.debug(f"Source edited:\n{source}")
 
             # Encoder source
 
-            source_encode = inspect.getsource(self.encoder.encode)
+            source_encode = await self.export_encode()
 
             log_local.debug(f"Encoder source from class:\n{source_encode}")
 

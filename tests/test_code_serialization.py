@@ -1,13 +1,19 @@
-import shutil
-import subprocess
-import textwrap
+import asyncio
+import inspect
 from pathlib import Path
 
 import pytest
 
-pythons = {
-    "3.9": Path("/Users/tommmlij/miniconda3/envs/plain_python39/bin/python"),
-    "3.11": Path("/Users/tommmlij/miniconda3/envs/plain_python311/bin/python")
+from franknpython import OperationBase
+
+pythons = [
+    "3.9",
+    "3.11"
+]
+
+interpreters = {
+    "3.9": Path(r"C:\Users\tommmlij\.miniconda3\envs\plain_python39\python.exe"),
+    "3.11": Path(r"C:\Users\tommmlij\.miniconda3\envs\plain_python311\python.exe")
 }
 
 
@@ -24,26 +30,24 @@ functions = [func1, func2]
 
 @pytest.fixture(params=pythons)
 def python1(request, tmp_path):
-    return Python(request.param)
+    class Python1(OperationBase):
+        python = request.param
+        venv_path = tmp_path
+
+    return Python1()
 
 
 @pytest.fixture(params=pythons)
-def python2(request, python1):
-    return Python(request.param)
+def python2(request, tmp_path):
+    class Python1(OperationBase):
+        python = request.param
+        venv_path = tmp_path
+
+    return Python1()
 
 
-class Python:
-    def __init__(self, version):
-        print(version)
-
-    def dumps(self, obj):
-        print(f"dumps: {obj}")
-
-    def load_and_is_true(self, expression):
-        print(f"load: {expression}")
-
-
+@pytest.mark.asyncio
 @pytest.mark.parametrize("func", functions)
-def test_basic_objects(python1, python2, func):
-    python1.dumps(func)
-    python2.load_and_is_true(f"obj == {func}")
+async def test_basic_objects(python1, python2, func):
+    await python1.import_work(inspect.getsource(func))
+
