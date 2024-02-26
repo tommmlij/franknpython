@@ -19,7 +19,7 @@ async def func(self):
 async def serialization():
     class T(OperationBase):
         python = Path(r"C:\Users\tommmlij\.miniconda3\envs\plain_python39\python.exe")
-        venv_path = Path()
+        venv_path = Path().cwd().joinpath(".venv")
 
         @staticmethod
         async def work():

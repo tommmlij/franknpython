@@ -19,6 +19,7 @@ from asyncio import StreamReader
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 
 from franknpython.helpers_code import encode_code, decode_code
+from franknpython.helpers_encoder import PickleEncoder, EncoderBase
 
 # from .helpers_code import serialize_code
 # from .helpers_io import EncoderBase, PickleEncoder
@@ -31,9 +32,7 @@ class OperationBase(ABC):
     python: Optional[Path] = None
     venv_path: Optional[Path] = None
     install_local_env: bool = False
-    encoder: PickleEncoder()
-    _work: Optional[FunctionType]
-    _encode: Optional[FunctionType]
+    encoder: Optional[EncoderBase] = None
 
     def __init__(self):
         async def work():
@@ -41,10 +40,11 @@ class OperationBase(ABC):
 
         self.work = work
 
-        async def encode():
-            raise NotImplementedError
+        if self.encoder is None:
+            self.encoder = PickleEncoder()
 
-        self.work = work
+        self.encode = self.encoder.encode
+        self.decode = self.encoder.decode
 
         if self.venv_path is None:
             self.venv_path = Path().cwd().joinpath(".venv")
@@ -54,6 +54,13 @@ class OperationBase(ABC):
 
     async def export_work(self) -> str:
         source = inspect.getsource(self.work)
+        return await encode_code(source)
+
+    async def import_encode(self, code: str) -> None:
+        self.encode = types.MethodType(await decode_code(code), self)
+
+    async def export_encode(self) -> str:
+        source = inspect.getsource(self.encode)
         return await encode_code(source)
 
     async def work_wrapper(self, **kwargs):
@@ -118,19 +125,15 @@ class OperationBase(ABC):
             result_file = d.joinpath("result")
             encoder_file = d.joinpath("encoder")
 
-            # Work function source
-
+            # Serialize work function
             source = await self.export_work()
 
-            log_local.debug(f"Source edited:\n{source}")
-
             # Encoder source
-
             source_encode = await self.export_encode()
 
             log_local.debug(f"Encoder source from class:\n{source_encode}")
 
-            source_encode = ""  # await serialize_code(source_encode)
+            source_encode = await self.export_encode()
 
             log_local.debug(f"Encoder source edited:\n{source_encode}")
 
