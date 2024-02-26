@@ -60,21 +60,6 @@ class OperationBase(ABC):
         source = inspect.getsource(self.encode)
         return await encode_code(source)
 
-    async def work_wrapper(self, **kwargs):
-
-        class SerializerHandler(logging.StreamHandler):
-
-            def emit(self, record):
-                print(urlsafe_b64encode(pickle.dumps(record)).decode("utf-8"))
-
-        logging.basicConfig(
-            level=logging.DEBUG,
-            handlers=[SerializerHandler()])
-        log = logging.getLogger(__name__)
-
-        log.info(f"Hello from {type(self).__name__}, python version is {platform.python_version()}")
-        return await self.work(**kwargs)
-
     @property
     def venv(self) -> Path:
         return self.venv_path.joinpath(type(self).__name__).absolute()
@@ -109,7 +94,6 @@ class OperationBase(ABC):
                         log_record.process = pid
                         log_local.handle(log_record)
                     except Exception as e:
-                        print(e)
                         print(line.decode('utf-8'), end="")
 
         with TemporaryDirectory() as td:

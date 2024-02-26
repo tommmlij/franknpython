@@ -15,7 +15,7 @@ handler.setFormatter(
     colorlog.ColoredFormatter(
         '%(asctime)s - %(process)-5d - %(log_color)s%(levelname)-8s%(reset)s | %(message)s'))
 
-logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+logging.basicConfig(level=logging.INFO, handlers=[handler])
 
 log = logging.getLogger()
 
@@ -32,7 +32,7 @@ async def serialization():
 
         @staticmethod
         async def work():
-            return "Hallo"
+            return "Whatever, man"
 
     t = T()
 

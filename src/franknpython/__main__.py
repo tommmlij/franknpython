@@ -1,7 +1,10 @@
+import logging
 import asyncio
 import pickle
+import platform
 import sys
 import traceback
+from base64 import urlsafe_b64encode
 from pathlib import Path
 
 import aiofiles
@@ -10,11 +13,21 @@ from franknpython import OperationBase
 from franknpython.helpers_encoder import PickleEncoder
 
 
-async def main(source):
-    import logging
+class SerializerHandler(logging.StreamHandler):
 
-    logging.basicConfig(level=logging.DEBUG)
-    log = logging.getLogger()
+    def emit(self, record):
+        print(urlsafe_b64encode(pickle.dumps(record)).decode("utf-8"))
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[SerializerHandler()])
+log = logging.getLogger(__name__)
+
+
+async def main(source):
+
+    log.info(f"Python version is {platform.python_version()}")
 
     async with aiofiles.open(Path(source).joinpath("code"), 'r') as code_file:
         code = await code_file.read()
@@ -25,9 +38,7 @@ async def main(source):
 
     with open(Path(source).joinpath("kwargs"), 'rb') as kwargs_file:
         kwargs = pickle.load(kwargs_file)
-
-    log.debug(f"main:code: {code}")
-    log.debug(f"main:kwargs: {kwargs}")
+        log.debug(f"main:Kwargs received in script: {kwargs}")
 
     class Surrogate(OperationBase):
         encoder = PickleEncoder()
@@ -35,7 +46,7 @@ async def main(source):
     s = Surrogate()
     await s.import_work(code)
 
-    result = await s.work_wrapper(**kwargs)
+    result = await s.work(**kwargs)
 
     log.debug(f"main:result: {result}")
 
